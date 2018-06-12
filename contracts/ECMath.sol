@@ -1,8 +1,7 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.23;
 
 // Library for secp256r1
 library ECMath {
-
 
   //curve parameters secp256r1
   uint256 constant a=115792089210356248762697446949407573530086143415290314195533631308867097853948;
@@ -11,45 +10,8 @@ library ECMath {
   uint256 constant gy=36134250956749795798585127919587881956611106672985015071877198253568414405109;
   uint256 constant p=115792089210356248762697446949407573530086143415290314195533631308867097853951;
   uint256 constant n=115792089210356248762697446949407573529996955224135760342422259061068512044369;
-  uint256 constant h=1;
 
-  /*
-  //signature parameters
-  //04 uncompressed public key, qx,qy exactly 128bit each
-  //signature: 30 indicates start, 44 indicates total length of signature
-  //02 indicates start of s; 20/21 length
-  //02 indicates start of r; 20/21 indicates length
-  //e sha256(message)
-  uint256 e=0x9834876dcfb05cb167a5c24953eba58c4ac89b1adf57f28f2f9d09af107ee8f0; //message
-  uint256 r=0x6933a06a9b5e654fad879364b58b819feb491810efcb90120423d5e827af4a74; //signature
-  uint256 s=0x0f9e643bc2b5124759040955312b6c0227ff21058d3f5bf1266741cc72a3a6ead; //signature
-  uint256 qx=0xb7435ff8eab13f5ddfd96a56f7cd23aa7d1d9fc6f5938b3f8f707b1e990be509; //public key x-coordinate signer
-  uint256 qy=0xa2e0d3cf29f61d6e49247f48f546b9569c5d7fba10a05bc25b7949db4a74e6d4; //public key y-coordinate signer
-
-  //Toy example
-  //curve parameters secp256r1
-  uint256 constant a=2;
-  uint256 constant b=2;
-  uint256 constant gx=5;
-  uint256 constant gy=1;
-  uint256 constant p=17;
-  uint256 constant n=19;
-  uint256 constant h=01;
-
-  //signature parameters
-  uint256 e=8; //message
-  uint256 r=10; //signature
-  uint256 s=13; //signature
-  uint256 qx=9; //public key x-coordinate signer
-  uint256 qy=16; //public key y-coordinate signer
-
-
-  function testsignature() returns(bool) {
-    return ecdsaverify(qx,qy,e,r,s);
-  }
-  */
-
-  function ecdsaverify(uint256 qx, uint256 qy, uint256 e, uint256 r, uint256 s) returns (bool) {
+  function ecdsaverify(uint256 qx, uint256 qy, uint256 e, uint256 r, uint256 s) public pure returns (bool) {
 
     if (!isPoint(qx,qy)) {
       return false;
@@ -74,7 +36,7 @@ library ECMath {
   }
 
   //function checks if point (x1,y1) is on curve, x1 and y1 affine coordinate parameters
-  function isPoint(uint256 x1, uint256 y1) private returns (bool) {
+  function isPoint(uint256 x1, uint256 y1) private pure returns (bool) {
     //point fulfills y^2=x^3+ax+b?
     if (mulmod(y1,y1,p) == addmod(mulmod(x1,mulmod(x1,x1,p),p),addmod(mulmod(a,x1,p),b,p),p)) {
       return (true);
@@ -86,7 +48,7 @@ library ECMath {
 
   // point addition for elliptic curve in jacobian coordinates
   // formula from https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
-  function ecadd(uint256[3] P, uint256[3] Q) private returns (uint256[3] R) {
+  function ecadd(uint256[3] P, uint256[3] Q) private pure returns (uint256[3] R) {
 
     uint256 u1;
     uint256 u2;
@@ -129,7 +91,7 @@ library ECMath {
 
   //point doubling for elliptic curve in jacobian coordinates
   //formula from https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
-  function ecdouble(uint256[3] P) private returns(uint256[3] R){
+  function ecdouble(uint256[3] P) private pure returns(uint256[3] R){
 
     //return point at infinity
     if (P[1]==0) {
@@ -153,7 +115,7 @@ library ECMath {
   }
 
   // function for elliptic curve multiplication in jacobian coordinates using Double-and-add method
-  function ecmul(uint256[3] P, uint256 d) private returns (uint256[3] R) {
+  function ecmul(uint256[3] P, uint256 d) private pure returns (uint256[3] R) {
 
     R[0]=0;
     R[1]=0;
@@ -180,7 +142,7 @@ library ECMath {
   }
 
   //jacobian to affine coordinates transfomration
-  function JtoA(uint256[3] P) private returns (uint256[2] Pnew) {
+  function JtoA(uint256[3] P) private pure returns (uint256[2] Pnew) {
     uint zInv = invmod(P[2],p);
     uint zInv2 = mulmod(zInv, zInv, p);
     Pnew[0] = mulmod(P[0], zInv2, p);
@@ -188,16 +150,16 @@ library ECMath {
   }
 
   //computing inverse by using euclidean algorithm
-  function invmod(uint256 a, uint p) private returns(uint256 invA) {
+  function invmod(uint256 oldR, uint p1) private pure returns(uint256 invA) {
     uint256 t=0;
     uint256 newT=1;
-    uint256 r=p;
-    uint256 newR=a;
+    uint256 r=p1;
+    uint256 newR=oldR;
     uint256 q;
     while (newR != 0) {
       q = r / newR;
 
-      (t, newT) = (newT, addmod(t , (p - mulmod(q, newT,p)) , p));
+      (t, newT) = (newT, addmod(t , (p1 - mulmod(q, newT,p1)) , p1));
       (r, newR) = (newR, r - q * newR );
     }
 
